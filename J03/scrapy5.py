@@ -1,4 +1,3 @@
-
 # Import os => Library used to easily manipulate operating systems
 ## More info => https://docs.python.org/3/library/os.html
 import os 
@@ -11,7 +10,7 @@ import logging
 import scrapy
 from scrapy.crawler import CrawlerProcess
 
-class QuotesSpider(scrapy.Spider):
+class QuotesSpiderPage(scrapy.Spider):
 
     # Name of your spider
     name = "quotes"
@@ -19,22 +18,22 @@ class QuotesSpider(scrapy.Spider):
     # Url to start your spider from 
     start_urls = [
         'http://quotes.toscrape.com/page/1/',
+        'http://quotes.toscrape.com/page/2/',
     ]
 
     # Callback function that will be called when starting your spider
-    # It will get text, author and tags of all the <div> with class="quote"
+    # It will get text, author and tags of all <div> with class="quote"
     def parse(self, response):
-        n = 10
-        for i in range(n):
-            i = i + 1
+        quotes = response.xpath('/html/body/div/div[2]/div[1]/div')
+        for quote in quotes:
             yield {
-                'text': response.xpath('/html/body/div/div[2]/div[1]/div[{}]/span[1]/text()'.format(i)).get(),
-                'author': response.xpath('/html/body/div/div[2]/div[1]/div[{}]/span[2]/small/text()'.format(i)).get(),
-                'tags': response.xpath('/html/body/div/div[2]/div[1]/div[{}]/div/a/text()'.format(i)).getall(),
+                'text': quote.xpath('span[1]/text()').get(),
+                'author': quote.xpath('span[2]/small/text()').get(),
+                'tags': quote.xpath('div/a/text()').getall(),
             }
             
 # Name of the file where the results will be saved
-filename = "2_quotes.json"
+filename = "5_quotesmultiplespiders.json"
 
 # If file already exists, delete it before crawling (because Scrapy will 
 # concatenate the last and new results otherwise)
@@ -50,10 +49,10 @@ process = CrawlerProcess(settings = {
     'USER_AGENT': 'Chrome/97.0',
     'LOG_LEVEL': logging.INFO,
     "FEEDS": {
-        'src/' + filename : {"format": "json"},
+        'src/' + filename: {"format": "json"},
     }
 })
 
 # Start the crawling using the spider you defined above
-process.crawl(QuotesSpider)
+process.crawl(QuotesSpiderPage)
 process.start()
